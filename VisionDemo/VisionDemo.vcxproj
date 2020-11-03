@@ -51,8 +51,8 @@
       <AdditionalIncludeDirectories>E:\opencv\build\include;E:\opencv\build\include\opencv;E:\opencv\build\include\opencv2;E:\Work\VisionDemo\DirectShow\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>E:\opencv\build\x64\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world3412d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\opencv\build\x64\vc15\lib;E:\Work\VisionDemo\dense_tencent;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_world3412d.lib;dsense.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
@@ -98,12 +98,23 @@
     <QtRcc Include="VisionDemo.qrc" />
     <QtUic Include="VisionDemo.ui" />
     <QtMoc Include="VisionDemo.h" />
-    <ClCompile Include="CameraDS.cpp" />
+    <ClCompile Include="camerads.cpp" />
+    <ClCompile Include="datasaver.cpp" />
+    <ClCompile Include="imagereader.cpp" />
+    <ClCompile Include="logwriter.cpp" />
+    <ClCompile Include="qlabel_mouse.cpp" />
     <ClCompile Include="VisionDemo.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CameraDS.h" />
+    <QtMoc Include="imagereader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="camerads.h" />
+    <ClInclude Include="datasaver.h" />
+    <ClInclude Include="logwriter.h" />
+    <ClInclude Include="util.hpp" />
+    <QtMoc Include="qlabel_mouse.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

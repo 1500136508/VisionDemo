@@ -1,25 +1,78 @@
-<UI version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>VisionDemoClass</class>
- <widget class="QWidget" name="VisionDemoClass" >
-  <property name="objectName" >
-   <string notr="true">VisionDemoClass</string>
-  </property>
-  <property name="geometry" >
+ <widget class="QWidget" name="VisionDemoClass">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>400</height>
+    <width>932</width>
+    <height>735</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>VisionDemo</string>
-  </property>$centralwidget$
+  </property>
+  <widget class="QScrollArea" name="scrollArea">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>10</y>
+     <width>691</width>
+     <height>651</height>
+    </rect>
+   </property>
+   <property name="widgetResizable">
+    <bool>true</bool>
+   </property>
+   <widget class="QWidget" name="scrollAreaWidgetContents">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>689</width>
+      <height>649</height>
+     </rect>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="m_btn_ShowImg">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>140</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>显示图像</string>
+   </property>
+  </widget>
  </widget>
- <layoutDefault spacing="6" margin="11" />
- <pixmapfunction></pixmapfunction>
+ <layoutdefault spacing="6" margin="11"/>
  <resources>
-   <include location="VisionDemo.qrc"/>
+  <include location="VisionDemo.qrc"/>
  </resources>
- <connections/>
-</UI>
+ <connections>
+  <connection>
+   <sender>m_btn_ShowImg</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>VisionDemoClass</receiver>
+   <slot>on_ShowImage_clicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>91</x>
+     <y>155</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>28</x>
+     <y>176</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>on_ShowImage_clicked()</slot>
+ </slots>
+</ui>
