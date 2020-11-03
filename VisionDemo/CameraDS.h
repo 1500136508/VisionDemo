@@ -1,108 +1,120 @@
-//////////////////////////////////////////////////////////////////////
+ï»¿//////////////////////////////////////////////////////////////////////
 // Video Capture using DirectShow
 // Author: Shiqi Yu (shiqi.yu@gmail.com)
 // Thanks to:
 //		HardyAI@OpenCV China
 //		flymanbox@OpenCV China (for his contribution to function CameraName, and frame width/height setting)
 // Last modification: April 9, 2009
+//
+// ä½¿ç”¨è¯´æ˜ï¼š
+//   1. å°†CameraDS.h CameraDS.cppä»¥åŠç›®å½•DirectShowå¤åˆ¶åˆ°ä½ çš„é¡¹ç›®ä¸­
+//   2. èœå• Project->Settings->Settings for:(All configurations)->C/C++->Category(Preprocessor)->Additional include directories
+//      è®¾ç½®ä¸º DirectShow/Include
+//   3. èœå• Project->Settings->Settings for:(All configurations)->Link->Category(Input)->Additional library directories
+//      è®¾ç½®ä¸º DirectShow/Lib
 //////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////
-// Ê¹ÓÃËµÃ÷£º
-//   1. ½«CameraDS.h CameraDS.cppÒÔ¼°Ä¿Â¼DirectShow¸´ÖÆµ½ÄãµÄÏîÄ¿ÖĞ
-//   2. ²Ëµ¥ Project->Settings->Settings for:(All configurations)->C/C++->Category(Preprocessor)->Additional include directories
-//      ÉèÖÃÎª DirectShow/Include
-//   3. ²Ëµ¥ Project->Settings->Settings for:(All configurations)->Link->Category(Input)->Additional library directories
-//      ÉèÖÃÎª DirectShow/Lib
-//////////////////////////////////////////////////////////////////////
+#define DS_CAP_PROP_EXPOSURE  1
+#define DS_CAP_PROP_BRIGHTNESS  2
+#define DS_CAP_PROP_CONTRAST  3
+#define DS_CAP_PROP_HUE  4
+#define DS_CAP_PROP_SATURATION  5
+#define DS_CAP_PROP_SHARPNESS  6
+#define DS_CAP_PROP_GAMMA  7
+#define DS_CAP_PROP_GAIN 8
 
 #ifndef CCAMERA_H
 #define CCAMERA_H
 
 #define WIN32_LEAN_AND_MEAN
 
-
 #include <atlbase.h>
-#include <windows.h>
+
 #include "qedit.h"
 #include "dshow.h"
-#include "opencv2/core/core_c.h"
 
-#define MYFREEMEDIATYPE(mt)	{if ((mt).cbFormat != 0)		\
-					{CoTaskMemFree((PVOID)(mt).pbFormat);	\
-					(mt).cbFormat = 0;						\
-					(mt).pbFormat = NULL;					\
-				}											\
-				if ((mt).pUnk != NULL)						\
-				{											\
-					(mt).pUnk->Release();					\
-					(mt).pUnk = NULL;						\
-				}}									
+#include <windows.h>
+//#include <opencv/cxcore.h>	// lyd
+#include <opencv2/opencv.hpp>
+#include <vector>
+#include <string>
 
 
-class CCameraDS  
+class  CCameraDS
 {
 private:
-	IplImage * m_pFrame;
-	bool m_bConnected;
-	int m_nWidth;
-	int m_nHeight;
-	bool m_bLock;
-	bool m_bChanged;
-	long m_nBufferSize;
 
-	CComPtr<IGraphBuilder> m_pGraph;
-	CComPtr<IBaseFilter> m_pDeviceFilter;
-	CComPtr<IMediaControl> m_pMediaControl;
-	CComPtr<IBaseFilter> m_pSampleGrabberFilter;
-	CComPtr<ISampleGrabber> m_pSampleGrabber;
-	CComPtr<IPin> m_pGrabberInput;
-	CComPtr<IPin> m_pGrabberOutput;
-	CComPtr<IPin> m_pCameraOutput;
-	CComPtr<IMediaEvent> m_pMediaEvent;
-	CComPtr<IBaseFilter> m_pNullFilter;
-	CComPtr<IBaseFilter> m_captureFilter;
-	CComPtr<IPin> m_pNullInputPin;
+    bool m_bConnected, m_bLock, m_bChanged;
 
-private:
-	bool BindFilter(int nCamIDX, IBaseFilter **pFilter);
-	void SetCrossBar();
+    int m_nWidth, m_nHeight;
+    int m_nFormatType;
+
+    long m_nBufferSize;
+    unsigned short *m_nBuffer;
+    IplImage *m_pFrame;
+    CComPtr<IAMCameraControl> m_pCameraControl;
+    CComPtr<IAMVideoProcAmp> m_pVideoProAmp;
+    CComPtr<IGraphBuilder> m_pGraph;
+    CComPtr<ISampleGrabber> m_pSampleGrabber;
+    CComPtr<IMediaControl> m_pMediaControl;
+    CComPtr<IMediaEvent> m_pMediaEvent;
+    CComPtr<IBaseFilter> m_pSampleGrabberFilter;
+    CComPtr<IBaseFilter> m_pDeviceFilter;
+    CComPtr<IBaseFilter> m_pNullFilter;
+
+    CComPtr<IPin> m_pGrabberInput;
+    CComPtr<IPin> m_pGrabberOutput;
+    CComPtr<IPin> m_pCameraOutput;
+    CComPtr<IPin> m_pNullInputPin;
+
+    bool BindFilter(int nCamIDX, IBaseFilter **pFilter);
+    bool BindFilter(IBaseFilter **pFilter,std::string pid,std::string vid);
+
+    void SetCrossBar();
+
+    bool isFormatYUY2 = false;
 
 public:
-	CCameraDS();
-	virtual ~CCameraDS();
 
-	//´ò¿ªÉãÏñÍ·£¬nCamIDÖ¸¶¨´ò¿ªÄÄ¸öÉãÏñÍ·£¬È¡Öµ¿ÉÒÔÎª0,1,2,...
-	//bDisplayPropertiesÖ¸Ê¾ÊÇ·ñ×Ô¶¯µ¯³öÉãÏñÍ·ÊôĞÔÒ³
-	//nWidthºÍnHeightÉèÖÃµÄÉãÏñÍ·µÄ¿íºÍ¸ß£¬Èç¹ûÉãÏñÍ·²»Ö§³ÖËùÉè¶¨µÄ¿í¶ÈºÍ¸ß¶È£¬Ôò·µ»Øfalse
-	bool CCameraDS::OpenCamera(int  nCamID, bool bDisplayProperties=true, int nWidth=320, int nHeight=240);
+    CCameraDS();
+    virtual ~CCameraDS();
 
-	//¹Ø±ÕÉãÏñÍ·£¬Îö¹¹º¯Êı»á×Ô¶¯µ÷ÓÃÕâ¸öº¯Êı
-	void CloseCamera();
+    //æ‰“å¼€æ‘„åƒå¤´ï¼ŒnCamIDæŒ‡å®šæ‰“å¼€å“ªä¸ªæ‘„åƒå¤´ï¼Œå–å€¼å¯ä»¥ä¸º0,1,2,...
+    //bDisplayPropertiesæŒ‡ç¤ºæ˜¯å¦è‡ªåŠ¨å¼¹å‡ºæ‘„åƒå¤´å±æ€§é¡µ
+    //nWidthå’ŒnHeightè®¾ç½®çš„æ‘„åƒå¤´çš„å®½å’Œé«˜ï¼Œå¦‚æœæ‘„åƒå¤´ä¸æ”¯æŒæ‰€è®¾å®šçš„å®½åº¦å’Œé«˜åº¦ï¼Œåˆ™è¿”å›false
+    bool OpenCamera(int nCamID, int nWidth = 1280, int nHeight = 800, bool isYUV2 = true);
+    bool OpenCamera(std::string pid, std::string vid, int nWidth= 1280, int nHeight=800, bool isYUV2 = true);
+    //å…³é—­æ‘„åƒå¤´ï¼Œææ„å‡½æ•°ä¼šè‡ªåŠ¨è°ƒç”¨è¿™ä¸ªå‡½æ•°
+    void CloseCamera();
 
-	//·µ»ØÉãÏñÍ·µÄÊıÄ¿
-	//¿ÉÒÔ²»ÓÃ´´½¨CCameraDSÊµÀı£¬²ÉÓÃint c=CCameraDS::CameraCount();µÃµ½½á¹û¡£
-	static int CameraCount(); 
+    bool isOpened();
+    //è¿”å›æ‘„åƒå¤´çš„æ•°ç›®
+    //å¯ä»¥ä¸ç”¨åˆ›å»ºCCameraDSå®ä¾‹ï¼Œé‡‡ç”¨int c=CCameraDS::CameraCount();å¾—åˆ°ç»“æœã€‚
+    static int CameraCount();
 
-	//¸ù¾İÉãÏñÍ·µÄ±àºÅ·µ»ØÉãÏñÍ·µÄÃû×Ö
-	//nCamID: ÉãÏñÍ·±àºÅ
-	//sName: ÓÃÓÚ´æ·ÅÉãÏñÍ·Ãû×ÖµÄÊı×é
-	//nBufferSize: sNameµÄ´óĞ¡
-	//¿ÉÒÔ²»ÓÃ´´½¨CCameraDSÊµÀı£¬²ÉÓÃCCameraDS::CameraName();µÃµ½½á¹û¡£
-	static int CCameraDS::CameraName(int nCamID, char* sName, int nBufferSize);
+    //æ ¹æ®æ‘„åƒå¤´çš„ç¼–å·è¿”å›æ‘„åƒå¤´çš„åå­—
+    //nCamID: æ‘„åƒå¤´ç¼–å·
+    //sName: ç”¨äºå­˜æ”¾æ‘„åƒå¤´åå­—çš„æ•°ç»„
+    //nBufferSize: sNameçš„å¤§å°
+    //å¯ä»¥ä¸ç”¨åˆ›å»ºCCameraDSå®ä¾‹ï¼Œé‡‡ç”¨CCameraDS::CameraName();å¾—åˆ°ç»“æœã€‚
+    static int CameraName(int nCamID, char* sName, int nBufferSize);
 
-	//·µ»ØÍ¼Ïñ¿í¶È
-	int GetWidth(){return m_nWidth;} 
+    //è¿”å›å›¾åƒå®½åº¦
+    int GetWidth(){return m_nWidth;}
 
-	//·µ»ØÍ¼Ïñ¸ß¶È
-	int GetHeight(){return m_nHeight;}
+    //è¿”å›å›¾åƒé«˜åº¦
+    int GetHeight(){return m_nHeight;}
 
-	//×¥È¡Ò»Ö¡£¬·µ»ØµÄIplImage²»¿ÉÊÖ¶¯ÊÍ·Å£¡
-	//·µ»ØÍ¼ÏñÊı¾İµÄÎªRGBÄ£Ê½µÄTop-down(µÚÒ»¸ö×Ö½ÚÎª×óÉÏ½ÇÏñËØ)£¬¼´IplImage::origin=0(IPL_ORIGIN_TL)
-	IplImage * QueryFrame();
-	void DisplayFilterProperties(void);
+    //æŠ“å–ä¸€å¸§ï¼Œè¿”å›çš„IplImageä¸å¯æ‰‹åŠ¨é‡Šæ”¾ï¼
+    //è¿”å›å›¾åƒæ•°æ®çš„ä¸ºRGBæ¨¡å¼çš„Top-down(ç¬¬ä¸€ä¸ªå­—èŠ‚ä¸ºå·¦ä¸Šè§’åƒç´ )ï¼Œå³IplImage::origin=0(IPL_ORIGIN_TL)
+    IplImage * QueryFrame();
 
+    bool read(cv::Mat &outputArray);
+    bool readRawData(unsigned char* data);
+
+    bool SetExposure(int iExposure);
+    bool getID(int &id);
+    bool SetAutoExposure();
+    bool Set(int flag, int value);
 };
 
-#endif 
+#endif
