@@ -107,7 +107,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="imagereader.h" />
+    <ClInclude Include="imagereader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camerads.h" />
