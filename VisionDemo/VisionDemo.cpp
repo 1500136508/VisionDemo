@@ -1,224 +1,400 @@
 #include <thread>
 #include <opencv.hpp>
 #include <QDebug>
+#include <QMessageBox>
 #include "VisionDemo.h"
 #include "CameraDS.h"
 #include "../dense_tencent/dsense_interface.h"
 
-cv::Mat K_rgb = cv::Mat::zeros(3, 3, CV_32FC1);
-cv::Mat R = cv::Mat::zeros(3, 3, CV_32FC1);
-cv::Mat K_ir = cv::Mat::zeros(3, 3, CV_32FC1);
-cv::Mat T = cv::Mat::zeros(3, 3, CV_32FC1);
-cv::Mat tmpM = cv::Mat::zeros(3, 3, CV_32FC1);
-
-ir_rgb_State rgb_param{ 0 };
-
-unsigned char PD[1024];
-float realpd[30];
 
 VisionDemo::VisionDemo(QWidget *parent)
     : QWidget(parent)
 {
     ui.setupUi(this);
 
-	spLabImage = std::make_shared<QLabel>(new QLabel());
+	/*setWindowFlags(Qt::FramelessWindowHint);
+	setAttribute(Qt::WA_TranslucentBackground);*/
+	m_areaMovable = QRect(0, 0, this->size().width(), 30);
+	m_bPressed = false;
 
-	RGBFrame = cv::Mat(cv::Size(frameHeightR, frameWidthR), CV_8UC3);
-	datagroup = new uchar[frameWidth*frameHeight * 4 + frameWidthR * frameHeightR * 2];
+	qRegisterMetaType<cv::Mat>("cv::Mat");
+	qRegisterMetaType<std::string>("std::string");
 
+	init();
 	buildConnect();
+
+	this->setMouseTracking(true);
+
+	bottonSetStyleSheet();
+	flashCam();
+	setModuleIndexSlot();
+	ui.label->setVisible(false);
+	ui.label_2->setVisible(false);
+	ui.saveButton2->setVisible(false);
+	ui.comboBoxModule->setVisible(true);
+	setIRShow();
+	setRGBShow();
+	setDEPTHShow();
+	setRDShow();
 }
 
 VisionDemo::~VisionDemo()
 {
+	sDialog->close();
+	imgRdr->release();
+}
+
+void VisionDemo::mousePressEvent(QMouseEvent *e)
+{
+	//鼠标左键
+	if (e->button() == Qt::LeftButton)
+	{
+		m_ptPress = e->pos();
+		m_areaMovable = QRect(0, 0, this->size().width(), 30);
+		m_bPressed = m_areaMovable.contains(m_ptPress);
+	}
+}
+
+void VisionDemo::mouseMoveEvent(QMouseEvent *e)
+{
+	if (m_bPressed)
+	{
+		move(pos() + e->pos() - m_ptPress);
+	}
+}
+
+void VisionDemo::mouseReleaseEvent(QMouseEvent *)
+{
+	m_bPressed = false;
+}
+
+void VisionDemo::mouseDoubleClickEvent(QMouseEvent * event)
+{
+	m_areaMovable = QRect(0, 0, this->size().width(), 30);
+	if (event->button() == Qt::LeftButton && m_areaMovable.contains(event->pos())) {
+		maxWindow();
+	}
+}
+
+bool VisionDemo::nativeEvent(const QByteArray & eventType, void * message, long * result)
+{
+	int g_nBorder = 5;
+	MSG* pMsg = (MSG*)message;
+	switch (pMsg->message)
+	{
+	case WM_NCHITTEST:
+	{
+		QPoint pos = mapFromGlobal(QPoint(LOWORD(pMsg->lParam), HIWORD(pMsg->lParam)));
+		bool bHorLeft = pos.x() < g_nBorder;
+		bool bHorRight = pos.x() > this->width() - g_nBorder;
+		bool bVertTop = pos.y() < g_nBorder;
+		bool bVertBottom = pos.y() > this->height() - g_nBorder;
+		if (bHorLeft && bVertTop)
+		{
+			*result = HTTOPLEFT;
+		}
+		else if (bHorLeft && bVertBottom)
+		{
+			*result = HTBOTTOMLEFT;
+		}
+		else if (bHorRight && bVertTop)
+		{
+			*result = HTTOPRIGHT;
+		}
+		else if (bHorRight && bVertBottom)
+		{
+			*result = HTBOTTOMRIGHT;
+		}
+		else if (bHorLeft)
+		{
+			*result = HTLEFT;
+		}
+		else if (bHorRight)
+		{
+			*result = HTRIGHT;
+		}
+		else if (bVertTop)
+		{
+			*result = HTTOP;
+		}
+		else if (bVertBottom)
+		{
+			*result = HTBOTTOM;
+		}
+		else
+		{
+			return false;
+		}
+		return true;
+	}
+	break;
+	default:
+		break;
+	}
+
+	return QWidget::nativeEvent(eventType, message, result);
 }
 
 void VisionDemo::buildConnect()
 {
-	connect(ui.m_btn_ShowImg, SIGNAL(clicked(bool)), this, SLOT(on_ShowImage_clicked()));
+	connect(ui.closeButton, SIGNAL(clicked()), this, SLOT(shutDownWindow()));
+	connect(ui.minButton, SIGNAL(clicked()), this, SLOT(minWindow()));
+	connect(ui.showLabel, SIGNAL(moveWindow(QPoint)), this, SLOT(moveWindow(QPoint)));
+	connect(ui.showLabel, SIGNAL(maxWindow()), this, SLOT(maxWindow()));
+	connect(this, SIGNAL(sendImage(cv::Mat)), ui.showLabel, SLOT(setImage(cv::Mat)));
+	connect(imgRdr, SIGNAL(sendImage(cv::Mat)), ui.showLabel, SLOT(setImage(cv::Mat)));
+	connect(this, SIGNAL(sendDisconnet()), ui.showLabel, SLOT(loadDefualtPNG()));
+	connect(ui.modeButton, SIGNAL(clicked()), this, SLOT(runCamera()));
+	connect(ui.optionButton, SIGNAL(clicked()), this, SLOT(showSaveStart()));
+	connect(ui.saveButton2, SIGNAL(clicked()), this, SLOT(showSaveStart()));
+	connect(imgRdr, SIGNAL(sendSaveDone()), this, SLOT(showSaveDone()));
+	connect(ui.showLabel, SIGNAL(sendPos(int, int)), imgRdr, SLOT(acceptLocation(int, int)));
+	connect(ui.showLabel,SIGNAL(moveWindow(QPoint)), this, SLOT(moveWindow(QPoint)));
+	connect(imgRdr, SIGNAL(sendLocationDepth(int, int, float)), this, SLOT(showPointDepth(int, int, float)));
+
+	connect(ui.showLabel, SIGNAL(sendArea(int, int, int, int, int)), imgRdr, SLOT(acceptArea(int, int, int, int, int)));
+	connect(ui.showLabel,SIGNAL(moveWindow(QPoint)), this, SLOT(moveWindow(QPoint)));
+	connect(imgRdr, SIGNAL(sendAreaAvg(float, float)), this, SLOT(showAvgDepth(float, float)));
+
+	connect(imgRdr, SIGNAL(sendFrameRate(QString, QString, QString)), this, SLOT(showFrameRate(QString, QString, QString)));
+
+	connect(imgRdr, SIGNAL(sendStopSignal(bool)), this, SLOT(showstatus(bool)));
+	connect(this, SIGNAL(sendCloseEven()), imgRdr, SLOT(stopingProgram()));
+
+	connect(ui.comboBoxModule, SIGNAL(currentTextChanged(QString)), this, SLOT(setModuleIndexSlot()));
+	connect(this, SIGNAL(setModuleIndex(QString)), imgRdr, SLOT(readXMLData(QString)));
+
+	connect(ui.optionButton, SIGNAL(clicked()), this, SLOT(saveSlot0()));
+	connect(ui.saveButton2, SIGNAL(clicked()), this, SLOT(saveSlot1()));
+
+	 connect(this, SIGNAL(sendSaveDataSignal(int)), imgRdr, SLOT(saveDataSlot(int)));
+
+	connect(imgRdr, SIGNAL(sendLostServer(bool)), this, SLOT(cameraInitFlag(bool)));
+
+	connect(ui.checkBoxIR, SIGNAL(stateChanged(int)), this, SLOT(setIRShow()));
+	connect(ui.checkBoxRGB, SIGNAL(stateChanged(int)), this, SLOT(setRGBShow()));
+	connect(ui.checkBoxDepth, SIGNAL(stateChanged(int)), this, SLOT(setDEPTHShow()));
+	connect(ui.checkBoxRD, SIGNAL(stateChanged(int)), this, SLOT(setRDShow()));
+
+	connect(this, SIGNAL(sendShowFlag(int, bool)), imgRdr, SLOT(setShowPic(int, bool)));
+
+
+	connect(sDialog, SIGNAL(sendSavePath(QString)), imgRdr, SLOT(savePathSlot(QString)));
+	connect(sDialog, SIGNAL(sendSaveStart(int)), imgRdr, SLOT(saveDataSlot(int)));
+	connect(sDialog, SIGNAL(sendSaveStop()), imgRdr, SLOT(saveStopSlot()));
+	connect(sDialog, SIGNAL(sendSaveMode(int)), imgRdr, SLOT(saveModeSetSlot(int)));
+	connect(imgRdr, SIGNAL(sendSaveInfo(QString)), sDialog, SLOT(showInfo(QString)));
+
+
+	connect(ui.flashCamBtn, SIGNAL(clicked()), this, SLOT(flashCam()));
 }
 
-int VisionDemo::thread_camera()
+void VisionDemo::init()
 {
-	int cam_count;
-
-	//仅仅获取摄像头数目
-	cam_count = CCameraDS::CameraCount();
-	printf("There are %d cameras.\n", cam_count);
-
-
-	//获取所有摄像头的名称
-	for (int i = 0; i < cam_count; i++)
-	{
-		char camera_name[1024];
-		int retval = CCameraDS::CameraName(i, camera_name, sizeof(camera_name));
-
-		if (retval > 0)
-			printf("Camera #%d's Name is '%s'.\n", i, camera_name);
-		else
-			printf("Can not get Camera #%d's name.\n", i);
-	}
-
-
-	if (cam_count == 0)
-		return -1;
-
-	CCameraDS camera;
-
-	//打开第一个摄像头
-	//if(! camera.OpenCamera(0, true)) //弹出属性选择窗口
-	if (!camera.OpenCamera(0, 640, 480)) //不弹出属性选择窗口，用代码制定图像宽和高
-	{
-		fprintf(stderr, "Can not open camera.\n");
-		return -1;
-	}
-
-
-	//cvNamedWindow("camera");
-	while (1)
-	{
-		try
-		{
-			//获取一帧
-			//IplImage *pFrame = camera.QueryFrame();
-			//cv::Mat m = cv::cvarrToMat(pFrame);
-			//imwrite("test1.tiff", m);
-
-			//显示
-			//cvShowImage("camera", pFrame);
-
-			bool getParam = false;
-			long long irT = 0;
-			long long rgbT = 0;
-			long long depthT = 0;
-			long long lastRgbT = 0;
-
-			memset(datagroup, 0, 640 * 480 * 2);
-			camera.readRawData(datagroup);
-			if (!getParam)
-			{
-				m_mutex.lock();
-				memcpy(PD, datagroup + 640 * 480 * 2 - 1032, 1024);
-				read_pd_data();
-				getParam = true;
-				m_mutex.unlock();
-			}
-
-			bool thisRoundIR = true;
-			uchar* ptr = datagroup + frameHeight * frameWidth * 2;
-			memcpy(&rgbT, datagroup + 640 * 480 * 2 - 8, sizeof(long long));
-			if (rgbT == lastRgbT) continue;
-			else lastRgbT = rgbT;
-			cv::Mat rgbyuv(cv::Size(frameWidthR, frameHeightR), CV_8U, ptr);
-			cv::imwrite("test.tiff", rgbyuv);
-			RGBFrame = cv::imdecode(rgbyuv, CV_LOAD_IMAGE_COLOR);
-			cv::transpose(RGBFrame, RGBFrame);
-			cv::flip(RGBFrame, RGBFrame, 0);
-			cv::flip(RGBFrame, RGBFrame, -1);
-			//RGBFrame.copyTo(container[2]);
-			cv::imwrite("test.tiff", RGBFrame);
-
-			if (cvWaitKey(20) == 'q')
-				break;
-		}
-		catch (cv::Exception &e)
-		{
-			const char *err_msg = e.what();
-			break;
-		}
-		catch (...)
-		{
-			break;
-		}
-	}
-	camera.CloseCamera(); //可不调用此函数，CCameraDS析构时会自动关闭摄像头
-
-	//cvDestroyWindow("camera");
-	return 0;
+	imgRdr = new imageReader(NULL);
+	sDialog = new saveDialog(NULL);
 }
 
-void VisionDemo::read_pd_data()
+void VisionDemo::maxWindow()
 {
-	unsigned char *ptr = PD + 16;
-	int datalen = 30;
-	int i = 0;
-	while (i < datalen) {
-		memcpy(&realpd[i], ptr, sizeof(float)); ptr += sizeof(float);
-		qDebug() << "param " << i << " " << realpd[i];
-		i++;
-	}
-#ifdef EFE_FORMAT
-	float ratio = 1080.f / 480.0f;
-#else
-	float ratio = 2;
-#endif
-	rgb_param.fxir = realpd[0] / 2;
-	rgb_param.fyir = realpd[1] / 2;
-	rgb_param.cxir = realpd[2] / 2;
-	rgb_param.cyir = realpd[3] / 2;
-
-	rgb_param.fxrgb = realpd[9] / ratio;
-	rgb_param.fyrgb = realpd[10] / ratio;
-	rgb_param.cxrgb = realpd[11] / ratio;
-	rgb_param.cyrgb = realpd[12] / ratio;
-
-	K_rgb.at<float>(0, 0) = rgb_param.fxrgb;
-	K_rgb.at<float>(0, 2) = rgb_param.cxrgb;
-	K_rgb.at<float>(1, 1) = rgb_param.fyrgb;
-	K_rgb.at<float>(1, 2) = rgb_param.cyrgb;
-	K_rgb.at<float>(2, 2) = 1;
-
-	K_ir.at<float>(0, 0) = rgb_param.fxir;
-	K_ir.at<float>(0, 2) = rgb_param.cxir;
-	K_ir.at<float>(1, 1) = rgb_param.fyir;
-	K_ir.at<float>(1, 2) = rgb_param.cyir;
-	K_ir.at<float>(2, 2) = 1;
-
-	rgb_param.R00 = realpd[18];
-	rgb_param.R01 = realpd[19];
-	rgb_param.R02 = realpd[20];
-
-	rgb_param.R10 = realpd[21];
-	rgb_param.R11 = realpd[22];
-	rgb_param.R12 = realpd[23];
-
-	rgb_param.R20 = realpd[24];
-	rgb_param.R21 = realpd[25];
-	rgb_param.R22 = realpd[26];
-
-	R.at<float>(0, 0) = rgb_param.R00;
-	R.at<float>(0, 1) = rgb_param.R01;
-	R.at<float>(0, 2) = rgb_param.R02;
-	R.at<float>(1, 0) = rgb_param.R10;
-	R.at<float>(1, 1) = rgb_param.R11;
-	R.at<float>(1, 2) = rgb_param.R12;
-	R.at<float>(2, 0) = rgb_param.R20;
-	R.at<float>(2, 1) = rgb_param.R21;
-	R.at<float>(2, 2) = rgb_param.R22;
-
-	rgb_param.T1 = realpd[27];
-	rgb_param.T2 = realpd[28];
-	rgb_param.T3 = realpd[29];
-
-	T.at<float>(0, 2) = rgb_param.T1;
-	T.at<float>(1, 2) = rgb_param.T2;
-	T.at<float>(2, 2) = rgb_param.T3;
-	tmpM = K_rgb * R*K_ir.inv() + K_rgb * T*K_ir.inv() / 600;
-	dsaver->setParam(rgb_param.fxrgb, rgb_param.fyrgb, rgb_param.cxrgb, rgb_param.cyrgb);
-	std::ofstream logFile; logFile.open("moudule_param.yaml");
-	logFile << "fx: " << rgb_param.fxrgb << std::endl;
-	logFile << "fy: " << rgb_param.fyrgb << std::endl;
-	logFile << "cx: " << rgb_param.cxrgb << std::endl;
-	logFile << "cy: " << rgb_param.cyrgb << std::endl;
-	logFile << "tx: " << 40 << std::endl;
-	logFile << "mind: " << 300 << std::endl;
-	logFile << "maxd: " << 2000 << std::endl;
-	logFile << "f0: " << rgb_param.fxrgb << std::endl;
-	logFile.close();
+	this->isMaximized() ? this->showNormal() : this->showMaximized();
 }
 
-void VisionDemo::on_ShowImage_clicked()
+void VisionDemo::moveWindow(QPoint m_pos)
 {
-	std::thread t1(&VisionDemo::thread_camera, this);
-	t1.detach();
+	move(pos() + m_pos);
 }
+
+void VisionDemo::shutDownWindow()
+{
+	this->close();
+}
+
+void VisionDemo::showPointDepth(int x, int y, float d)
+{
+	if (x != -1 && y != -1) {
+		QString info;
+		info.sprintf("    %d, %d", x, y);
+		ui.labelCoordinate->setText(" Coordinate");
+		ui.labelxy->setText(info);
+		info.sprintf("    %.2f\n", d);
+		ui.labeldeptht->setText(" Depth");
+		ui.labeldepth->setText(info);
+	}
+	else {
+		ui.labelCoordinate->clear();
+		ui.labelxy->clear();
+		ui.labeldeptht->clear();
+		ui.labeldepth->clear();
+	}
+}
+
+void VisionDemo::minWindow()
+{
+	this->showMinimized();
+}
+
+void VisionDemo::closeEvent(QCloseEvent *event)
+{
+	sDialog->close();
+	emit sendCloseEven();
+}
+
+void VisionDemo::bottonSetStyleSheet()
+{
+	ui.modeButton->setStyleSheet(
+		QLatin1String("QPushButton{border-image: url(:/haisi_UI_demo/ppppp/star_click.png);}"
+			"QPushButton:hover{border-image: url(:/haisi_UI_demo/ppppp/star_nor.png);}")
+	);
+	ui.optionButton->setStyleSheet(
+		QLatin1String("QPushButton{border-image: url(:/haisi_UI_demo/ppppp/save_click.png);}"
+			"QPushButton:hover{border-image: url(:/haisi_UI_demo/ppppp/save_nor.png);}")
+	);
+
+	ui.saveButton2->setStyleSheet(
+		QLatin1String("QPushButton{border-image: url(:/haisi_UI_demo/ppppp/save_click.png);}"
+			"QPushButton:hover{border-image: url(:/haisi_UI_demo/ppppp/save_nor.png);}")
+	);
+
+
+	ui.closeButton->setStyleSheet(
+		QString::fromUtf8("QPushButton{image: url(:/haisi_UI_demo/ppppp/btl/Close_normal.png);border-image: url(:/haisi_UI_demo/ppppp/\350\203\214\346\231\257\345\233\276.png);}"
+			"QPushButton:hover{image: url(:/haisi_UI_demo/ppppp/btl/Close_hover.png);border-image: url(:/haisi_UI_demo/ppppp/\350\203\214\346\231\257\345\233\276.png);}"
+		)
+	);
+	ui.minButton->setStyleSheet(
+		QString::fromUtf8("QPushButton{image: url(:/haisi_UI_demo/ppppp/btl/Minimize_normal.png);border-image: url(:/haisi_UI_demo/ppppp/\350\203\214\346\231\257\345\233\276.png);}"
+			"QPushButton:hover{image: url(:/haisi_UI_demo/ppppp/btl/Minimize_hover.png);border-image: url(:/haisi_UI_demo/ppppp/\350\203\214\346\231\257\345\233\276.png);}"
+		)
+	);
+}
+
+void VisionDemo::runCamera()
+{
+	imgRdr->run(camIndex);
+	//    ui.modeButton->setStyleSheet(
+	//        QLatin1String("QPushButton{border-image: url(:/haisi_UI_demo/ppppp/stop_click.png);}"
+	//            "QPushButton:hover{border-image: url(:/haisi_UI_demo/ppppp/stop_nor.png);}")
+	//                );
+}
+
+void VisionDemo::stopView()
+{
+	qDebug() << "stop!";
+	//    ui.modeButton->setStyleSheet(
+	//        QLatin1String("QPushButton{border-image: url(:/haisi_UI_demo/ppppp/star_click.png);}"
+	//            "QPushButton:hover{border-image: url(:/haisi_UI_demo/ppppp/star_nor.png);}")
+		//    );
+}
+
+void VisionDemo::showAvgDepth(float depth0, float depth1)
+{
+	QString depthStr;
+	depthStr.sprintf("%.2f %.2f", depth0, depth1);
+	ui.labelDepthAvg->setText(depthStr);
+}
+
+void VisionDemo::showSaveStart()
+{
+	//    ui.labelArea->setText("Saving...");
+}
+
+void VisionDemo::showSaveDone()
+{
+	//    ui.labelArea->setText("Save Done!");
+}
+
+void VisionDemo::showFrameRate(QString irRate, QString depthRate, QString rgbRate)
+{
+	QString info = "IR:" + irRate + " " + "Depth:" + irRate + " " + "RGB:" + rgbRate;
+	ui.labelFrameRate->setText(info);
+
+	FILE* fp = fopen("frameRate.log", "a");
+	std::time_t t = std::time(0);
+	char buf[128] = { 0 };
+	strftime(buf, 64, "%Y-%m-%d %H:%M:%S", localtime(&t));
+	std::string timeSTR = std::string(buf);
+
+	std::string writeInfo = "[" + timeSTR + "] " + info.toStdString() + "\n";
+	fwrite(writeInfo.c_str(), 1, writeInfo.size(), fp);
+	fclose(fp);
+}
+
+void VisionDemo::showstatus(bool status)
+{
+	if (!cameraReady) return;
+	if (status)
+		ui.labelModeText->setText(QString::fromLocal8Bit("预览进行中"));
+	else
+		ui.labelModeText->setText(QString::fromLocal8Bit("预览中止"));
+}
+
+void VisionDemo::setModuleIndexSlot()
+{
+	// QString xml = "D:/KnightFish/haisi_UI_demo/haisi_UI_demo/calibResult/W04.xml";
+	// QString xml = "calibResult/"+ui.comboBoxModule->currentText()+".xml";
+	// emit setModuleIndex(xml);
+	camIndex = ui.comboBoxModule->currentText().toInt();
+}
+
+void VisionDemo::saveSlot0()
+{
+	emit sendSaveDataSignal(0);
+	sDialog->open();
+}
+
+void VisionDemo::saveSlot1()
+{
+	emit sendSaveDataSignal(1);
+}
+
+void VisionDemo::cameraInitFlag(bool camStop)
+{
+	cameraReady = !camStop;
+	if (!cameraReady)
+		ui.labelModeText->setText(QString::fromLocal8Bit("摄像头未连接"));
+}
+
+void VisionDemo::setIRShow()
+{
+	if (!ui.checkBoxIR->isChecked() && !ui.checkBoxDepth->isChecked() && !ui.checkBoxRGB->isChecked() && !ui.checkBoxRD->isChecked())
+		ui.checkBoxIR->setCheckState(Qt::CheckState::Checked);
+	emit sendShowFlag(0, ui.checkBoxIR->isChecked());
+}
+
+void VisionDemo::setRGBShow()
+{
+	if (!ui.checkBoxIR->isChecked() && !ui.checkBoxDepth->isChecked() && !ui.checkBoxRGB->isChecked() && !ui.checkBoxRD->isChecked())
+		ui.checkBoxRGB->setCheckState(Qt::CheckState::Checked);
+	emit sendShowFlag(2, ui.checkBoxRGB->isChecked());
+}
+
+void VisionDemo::setDEPTHShow()
+{
+	if (!ui.checkBoxIR->isChecked() && !ui.checkBoxDepth->isChecked() && !ui.checkBoxRGB->isChecked() && !ui.checkBoxRD->isChecked())
+		ui.checkBoxDepth->setCheckState(Qt::CheckState::Checked);
+	emit sendShowFlag(1, ui.checkBoxDepth->isChecked());
+}
+
+void VisionDemo::setRDShow()
+{
+	if (!ui.checkBoxIR->isChecked() && !ui.checkBoxDepth->isChecked() && !ui.checkBoxRGB->isChecked() && !ui.checkBoxRD->isChecked())
+		ui.checkBoxRD->setCheckState(Qt::CheckState::Checked);
+	emit sendShowFlag(3, ui.checkBoxRD->isChecked());
+}
+
+void VisionDemo::flashCam()
+{
+	int cameraNum = CCameraDS::CameraCount();
+	ui.comboBoxModule->clear();
+	char camName[100];
+	for (int i = 0; i < cameraNum; i++) {
+		CCameraDS::CameraName(i, camName, 100);
+		std::string cN(camName);
+		if (cN.find("UVC") != std::string::npos) ui.comboBoxModule->addItem(QString::number(i));
+	}
+	if (ui.comboBoxModule->count() == 0) {
+		QMessageBox::critical(NULL, "ERROR", "No Camera Found", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes); camIndex = -1; return;
+	}
+}
+

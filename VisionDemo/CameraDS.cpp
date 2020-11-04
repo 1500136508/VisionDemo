@@ -263,9 +263,9 @@ bool CCameraDS::OpenCamera(int nCamID, int nWidth, int nHeight, bool isYUV2)
 
     m_bConnected = true;
 
-    pEnum = NULL;
-    hr = m_pDeviceFilter->QueryInterface(&m_pCameraControl);
-    hr = m_pDeviceFilter->QueryInterface(&m_pVideoProAmp);
+	pEnum = NULL;
+	hr = m_pDeviceFilter->QueryInterface(&m_pCameraControl);
+	hr = m_pDeviceFilter->QueryInterface(&m_pVideoProAmp);
 
     return true;
 }
