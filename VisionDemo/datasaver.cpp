@@ -62,7 +62,11 @@ int dataSaver::storeAloneRGBData(cv::Mat rgbFA, long long timeStamp)
 
 int dataSaver::setParam(float _fx, float _fy, float _cx, float _cy)
 {
-    fx = _fx;fy = _fy;cx = _cx;cy = _cy; return  0;
+	fx = _fx;
+	fy = _fy;
+	cx = _cx;
+	cy = _cy;
+	return  0;
 }
 
 int dataSaver::checkReady()

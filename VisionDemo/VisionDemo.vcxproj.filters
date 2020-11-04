@@ -60,9 +60,6 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="imagereader.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="qlabel_mouse.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -78,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="imagereader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
