@@ -1,19 +1,37 @@
 <RCC>
-    <qresource prefix="/VisionDemo">
-        <file>image_ico/.DS_Store</file>
-        <file>image_ico/bg1.png.zip</file>
-        <file>image_ico/disconnect.png</file>
-        <file>image_ico/Option_act.png</file>
-        <file>image_ico/Option_normal.png</file>
-        <file>image_ico/save_click.png</file>
-        <file>image_ico/save_nor.png</file>
-        <file>image_ico/star_click.png</file>
-        <file>image_ico/star_nor.png</file>
-        <file>image_ico/stop_click.png</file>
-        <file>image_ico/stop_nor.png</file>
-        <file>image_ico/widthbackground.png</file>
-        <file>image_ico/yxj.png</file>
-        <file>image_ico/背景图.png</file>
-        <file>image_ico/标题栏.png</file>
-    </qresource>
+  <qresource prefix="/VisionDemo">
+    <file>image_ico/bg1.png/bg1.png</file>
+    <file>image_ico/btl/Close_hover.png</file>
+    <file>image_ico/btl/Close_normal.png</file>
+    <file>image_ico/btl/Minimize_hover.png</file>
+    <file>image_ico/btl/Minimize_normal.png</file>
+    <file>image_ico/FaceRecognition/button/.DS_Store</file>
+    <file>image_ico/FaceRecognition/button/FaceRecognition_act.png</file>
+    <file>image_ico/FaceRecognition/button/FaceRecognition_normal.png</file>
+    <file>image_ico/FaceRecognition/button/FaceRecord_act.png</file>
+    <file>image_ico/FaceRecognition/button/FaceRecord_normal.png</file>
+    <file>image_ico/FaceRecognition/button/SwitchMode_hover.png</file>
+    <file>image_ico/FaceRecognition/button/SwitchMode_normal.png</file>
+    <file>image_ico/FaceRecognition/FaceRecognitionMode.png</file>
+    <file>image_ico/BG/.DS_Store</file>
+    <file>image_ico/BG/BG1.png</file>
+    <file>image_ico/BG/BG2.png</file>
+    <file>image_ico/BG/ConnectBG.png</file>
+    <file>image_ico/BG/DisconnectBG1.png</file>
+    <file>image_ico/.DS_Store</file>
+    <file>image_ico/bg1.png.zip</file>
+    <file>image_ico/disconnect.png</file>
+    <file>image_ico/Option_act.png</file>
+    <file>image_ico/Option_normal.png</file>
+    <file>image_ico/save_click.png</file>
+    <file>image_ico/save_nor.png</file>
+    <file>image_ico/star_click.png</file>
+    <file>image_ico/star_nor.png</file>
+    <file>image_ico/stop_click.png</file>
+    <file>image_ico/stop_nor.png</file>
+    <file>image_ico/widthbackground.png</file>
+    <file>image_ico/yxj.png</file>
+    <file>image_ico/背景图.png</file>
+    <file>image_ico/标题栏.png</file>
+  </qresource>
 </RCC>

@@ -6,23 +6,36 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>932</width>
-    <height>735</height>
+    <width>882</width>
+    <height>681</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>881</width>
+    <height>681</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1000</width>
+    <height>681</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>VisionDemo</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">border-image: url(:/VisionDemo/image_ico/BG/BG2.png);
+color: rgb(85, 255, 255);</string>
   </property>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>40</y>
-     <width>841</width>
-     <height>661</height>
+     <x>0</x>
+     <y>0</y>
+     <width>881</width>
+     <height>681</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -39,15 +52,26 @@
         </item>
         <item>
          <widget class="QPushButton" name="minButton">
+          <property name="styleSheet">
+           <string notr="true">image: url(:/VisionDemo/image_ico/btl/Minimize_normal.png);
+border-image: url(:/VisionDemo/image_ico/背景图.png);</string>
+          </property>
           <property name="text">
-           <string>最小化</string>
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="VisionDemo.qrc">
+            <normaloff>:/VisionDemo/image_ico/btl/Minimize_normal.png</normaloff>:/VisionDemo/image_ico/btl/Minimize_normal.png</iconset>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="closeButton">
+          <property name="styleSheet">
+           <string notr="true">image: url(:/VisionDemo/image_ico/btl/Close_normal.png);</string>
+          </property>
           <property name="text">
-           <string>关闭</string>
+           <string/>
           </property>
          </widget>
         </item>
@@ -57,16 +81,35 @@
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
          <widget class="QLabel" name="labelModeText">
+          <property name="minimumSize">
+           <size>
+            <width>200</width>
+            <height>20</height>
+           </size>
+          </property>
           <property name="text">
            <string>预览未开始</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBoxModule"/>
+         <widget class="QComboBox" name="comboBoxModule">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>20</height>
+           </size>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QPushButton" name="flashCamBtn">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="text">
            <string>刷新摄像头列表</string>
           </property>
@@ -78,13 +121,25 @@
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QPushButton" name="modeButton">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>50</height>
+           </size>
+          </property>
           <property name="text">
-           <string>开始/停止</string>
+           <string/>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="label">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="text">
            <string>Save On PC</string>
           </property>
@@ -92,8 +147,14 @@
         </item>
         <item>
          <widget class="QPushButton" name="optionButton">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>50</height>
+           </size>
+          </property>
           <property name="text">
-           <string>保存数据</string>
+           <string/>
           </property>
          </widget>
         </item>
@@ -106,6 +167,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="saveButton2">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="text">
            <string>保存图像</string>
           </property>
@@ -176,50 +243,119 @@
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
          <widget class="QLabel" name="labelFrameRate">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="sizeIncrement">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="text">
-           <string>TextLabel</string>
+           <string/>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="labelArea">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="text">
-           <string>TextLabel</string>
+           <string/>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="labelDepthAvg">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="text">
-           <string>TextLabel</string>
+           <string/>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="labelCoordinate">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="text">
-           <string>TextLabel</string>
+           <string/>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="labelxy">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="text">
-           <string>TextLabel</string>
+           <string/>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="labeldeptht">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="text">
-           <string>TextLabel</string>
+           <string/>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="labeldepth">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="text">
-           <string>TextLabel</string>
+           <string/>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -229,6 +365,12 @@
     </item>
     <item>
      <widget class="QScrollArea" name="scrollArea">
+      <property name="maximumSize">
+       <size>
+        <width>700</width>
+        <height>16777215</height>
+       </size>
+      </property>
       <property name="mouseTracking">
        <bool>true</bool>
       </property>
@@ -240,8 +382,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>605</width>
-         <height>657</height>
+         <width>669</width>
+         <height>679</height>
         </rect>
        </property>
        <property name="mouseTracking">
@@ -253,14 +395,17 @@
        <widget class="QLabel_Mouse" name="showLabel">
         <property name="geometry">
          <rect>
-          <x>0</x>
+          <x>-10</x>
           <y>0</y>
-          <width>601</width>
-          <height>651</height>
+          <width>681</width>
+          <height>681</height>
          </rect>
         </property>
+        <property name="mouseTracking">
+         <bool>true</bool>
+        </property>
         <property name="text">
-         <string>TextLabel</string>
+         <string/>
         </property>
        </widget>
       </widget>

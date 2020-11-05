@@ -12,8 +12,8 @@ VisionDemo::VisionDemo(QWidget *parent)
 {
     ui.setupUi(this);
 
-	/*setWindowFlags(Qt::FramelessWindowHint);
-	setAttribute(Qt::WA_TranslucentBackground);*/
+	//setWindowFlags(Qt::FramelessWindowHint);
+	//setAttribute(Qt::WA_TranslucentBackground);
 	m_areaMovable = QRect(0, 0, this->size().width(), 30);
 	m_bPressed = false;
 
@@ -243,28 +243,28 @@ void VisionDemo::closeEvent(QCloseEvent *event)
 void VisionDemo::bottonSetStyleSheet()
 {
 	ui.modeButton->setStyleSheet(
-		QLatin1String("QPushButton{border-image: url(:/haisi_UI_demo/ppppp/star_click.png);}"
-			"QPushButton:hover{border-image: url(:/haisi_UI_demo/ppppp/star_nor.png);}")
+		QLatin1String("QPushButton{border-image: url(:/VisionDemo/image_ico/star_click.png);}"
+			"QPushButton:hover{border-image: url(:/VisionDemo/image_ico/star_nor.png);}")
 	);
 	ui.optionButton->setStyleSheet(
-		QLatin1String("QPushButton{border-image: url(:/haisi_UI_demo/ppppp/save_click.png);}"
-			"QPushButton:hover{border-image: url(:/haisi_UI_demo/ppppp/save_nor.png);}")
+		QLatin1String("QPushButton{border-image: url(:/VisionDemo/image_ico/save_click.png);}"
+			"QPushButton:hover{border-image: url(:/VisionDemo/image_ico/save_nor.png);}")
 	);
 
 	ui.saveButton2->setStyleSheet(
-		QLatin1String("QPushButton{border-image: url(:/haisi_UI_demo/ppppp/save_click.png);}"
-			"QPushButton:hover{border-image: url(:/haisi_UI_demo/ppppp/save_nor.png);}")
+		QLatin1String("QPushButton{border-image: url(:/VisionDemo/image_ico/save_click.png);}"
+			"QPushButton:hover{border-image: url(:/VisionDemo/image_ico/save_nor.png);}")
 	);
 
 
 	ui.closeButton->setStyleSheet(
-		QString::fromUtf8("QPushButton{image: url(:/haisi_UI_demo/ppppp/btl/Close_normal.png);border-image: url(:/haisi_UI_demo/ppppp/\350\203\214\346\231\257\345\233\276.png);}"
-			"QPushButton:hover{image: url(:/haisi_UI_demo/ppppp/btl/Close_hover.png);border-image: url(:/haisi_UI_demo/ppppp/\350\203\214\346\231\257\345\233\276.png);}"
+		QString::fromUtf8("QPushButton{image: url(:/VisionDemo/image_ico/btl/Close_normal.png);border-image: url(:/VisionDemo/image_ico/\350\203\214\346\231\257\345\233\276.png);}"
+			"QPushButton:hover{image: url(:/VisionDemo/image_ico/btl/Close_hover.png);border-image: url(:/VisionDemo/image_ico/\350\203\214\346\231\257\345\233\276.png);}"
 		)
 	);
 	ui.minButton->setStyleSheet(
-		QString::fromUtf8("QPushButton{image: url(:/haisi_UI_demo/ppppp/btl/Minimize_normal.png);border-image: url(:/haisi_UI_demo/ppppp/\350\203\214\346\231\257\345\233\276.png);}"
-			"QPushButton:hover{image: url(:/haisi_UI_demo/ppppp/btl/Minimize_hover.png);border-image: url(:/haisi_UI_demo/ppppp/\350\203\214\346\231\257\345\233\276.png);}"
+		QString::fromUtf8("QPushButton{image: url(:/VisionDemo/image_ico/btl/Minimize_normal.png);border-image: url(:/VisionDemo/image_ico/\350\203\214\346\231\257\345\233\276.png);}"
+			"QPushButton:hover{image: url(:/VisionDemo/image_ico/btl/Minimize_hover.png);border-image: url(:/VisionDemo/image_ico/\350\203\214\346\231\257\345\233\276.png);}"
 		)
 	);
 }
